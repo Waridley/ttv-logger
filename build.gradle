@@ -1,0 +1,30 @@
+plugins {
+    id 'java'
+    id "io.freefair.lombok" version "4.1.1"
+}
+
+group 'com.waridley.ttv'
+version '1.0'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+
+    jcenter()
+    maven { url "https://oss.jfrog.org/artifactory/libs-release"}
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+
+    //mongodb java driver
+    compile 'org.mongodb:mongo-java-driver:3.11.0'
+
+    //Twitch API library
+    compile group: 'com.github.twitch4j', name: 'twitch4j', version: '1.0.0-alpha.16'
+
+    //lombok
+    compileOnly 'org.projectlombok:lombok:1.18.10'
+    annotationProcessor 'org.projectlombok:lombok:1.18.10'
+}
