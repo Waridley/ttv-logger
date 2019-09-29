@@ -27,8 +27,8 @@ import java.util.Optional;
 public class Launcher {
 	
 	private static String redirectUrl = "http://localhost:6464";
+	private static String dbname = "chatgame";
 	private static String channelName;
-	private static String channelId = "43394066";
 	private static String clientId;
 	private static String clientSecret;
 	private static RefreshingProvider idProvider;
@@ -58,10 +58,11 @@ public class Launcher {
 	private synchronized static void init(String[] args) throws URISyntaxException, IOException {
 		LoggerOptions options = createOptionsFromArgs(args);
 		channelName = args[0];
-		clientId = args[2];
-		clientSecret = args[3];
+		clientId = args[1];
+		clientSecret = args[2];
 		idProvider = new RefreshingProvider(clientId, clientSecret, redirectUrl);
-		db = connectToDatabase(args[4]);
+		db = connectToDatabase(args[3]);
+		dbname = args[4];
 		
 		credMap = new NamedCredentialMap();
 		credBackend = credMap;
@@ -105,7 +106,6 @@ public class Launcher {
 		ChatLogger chatLogger = new MongoChatLogger(
 				twitchClient.getChat(),
 				channelName,
-				channelId,
 				db,
 				"chat");
 		startWatchtimeLogger();
@@ -119,7 +119,7 @@ public class Launcher {
 				.build();
 		
 		MongoClient mongoClient = MongoClients.create(settings);
-		return mongoClient.getDatabase("chatgame");
+		return mongoClient.getDatabase(dbname);
 	}
 	
 	private synchronized static LoggerOptions createOptionsFromArgs(String[] args) {

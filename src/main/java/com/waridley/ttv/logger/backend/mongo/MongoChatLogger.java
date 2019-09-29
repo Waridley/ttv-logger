@@ -18,7 +18,7 @@ public class MongoChatLogger extends ChatLogger implements MongoBackend {
 	@Override
 	public MongoDatabase db() { return db; }
 	
-	public MongoChatLogger(TwitchChat chat, String channelName, String channelId, MongoDatabase db, String collectionName) {
+	public MongoChatLogger(TwitchChat chat, String channelName, MongoDatabase db, String collectionName) {
 		super(chat, channelName);
 		this.db = db;
 		
