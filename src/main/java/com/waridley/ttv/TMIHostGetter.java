@@ -1,5 +1,6 @@
 package com.waridley.ttv;
 
+import com.github.twitch4j.tmi.TwitchMessagingInterface;
 import com.netflix.hystrix.HystrixCommand;
 import feign.Param;
 import feign.RequestLine;
@@ -9,7 +10,7 @@ import java.util.List;
 /**
  * Twitch - Messaging Interface
  */
-public interface TMIHostGetter {
+public interface TMIHostGetter extends TwitchMessagingInterface {
 	
 	@RequestLine("GET /hosts?include_logins=1&host={id}")
 	HystrixCommand<HostList> getHosts(
@@ -18,6 +19,6 @@ public interface TMIHostGetter {
 	
 	@RequestLine("GET /hosts?include_logins=1&target={id}")
 	HystrixCommand<HostList> getHostsOf(
-			@Param("id") List<String> targetIds
+			@Param("id") String targetIds
 	);
 }

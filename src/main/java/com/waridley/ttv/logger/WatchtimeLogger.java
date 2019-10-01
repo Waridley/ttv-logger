@@ -8,7 +8,6 @@ package com.waridley.ttv.logger;
 import com.github.twitch4j.helix.domain.Stream;
 import com.github.twitch4j.helix.domain.User;
 import com.github.twitch4j.tmi.TwitchMessagingInterface;
-import com.github.twitch4j.tmi.TwitchMessagingInterfaceBuilder;
 import com.waridley.ttv.*;
 
 import java.util.*;
@@ -17,9 +16,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /* TODO:
- *  Send notitications
+ *  Send notitications? Or log events for later handling?
  *  Implement blacklist
- *  Methods have been made synchronized, but that doesn't make fields thread-safe
  */
 
 public class WatchtimeLogger {
@@ -29,7 +27,6 @@ public class WatchtimeLogger {
 	
 	
 	private TwitchMessagingInterface tmi;
-	private TMIHostGetter tmiHostGetter;
 	private TtvStorageInterface storageInterface;
 	private String channelName;
 	private String channelId;
@@ -70,8 +67,7 @@ public class WatchtimeLogger {
 		this.running = false;
 		this.guestLogin = null;
 		
-		this.tmi = TwitchMessagingInterfaceBuilder.builder().build();
-		this.tmiHostGetter = TMIHostGetterBuilder.builder().build();
+		this.tmi = TMIHostGetterBuilder.builder().build();
 		
 		
 	}
@@ -131,52 +127,56 @@ public class WatchtimeLogger {
 			for(int i = 0; i < namesInChat.size(); i++) {
 				namesInChat.set(i, namesInChat.get(i).toLowerCase());
 			}
-			List<TtvUser> tmpUsers = new ArrayList<>();
+			List<TtvUser> tmpUsers = new Vector<>();
 			
 			System.out.println("Users in chat at " + new Date().toString());
 			//tmpUsers = storageInterface.findOrCreateTtvUsers(storageInterface.getHelixUsers(null, namesInChat));
-//			for(TtvUser u : tmpUsers) {
-//				System.out.println("    " + u.getHelixUser().getDisplayName());
-//			}
 			
 			List<User> helixUsers = storageInterface.getHelixUsersFromLogins(namesInChat);
 			for(int i = 0; i < namesInChat.size(); i++) {
 				tmpUsers.add(storageInterface.findOrCreateTtvUser(helixUsers.get(i)));
-				System.out.println("    " + (tmpUsers.get(i).getHelixUser() != null ? (tmpUsers.get(i).getHelixUser().getDisplayName()) : namesInChat.get(i)));
+				//System.out.println("    " + (tmpUsers.get(i).getHelixUser() != null ? (tmpUsers.get(i).getHelixUser().getDisplayName()) : namesInChat.get(i)));
+			}
+			for(TtvUser u : tmpUsers) {
+				System.out.println("    " + u.getHelixUser().getDisplayName());
 			}
 
 			this.usersInChat = tmpUsers;
 			
 			
-			for(Host host : tmiHostGetter.getHosts(Collections.singletonList(channelId)).execute().getHosts()) {
-				if(host.getTargetLogin() != null) {
-					enterHostMode(host.getTargetLogin());
-					List<String> namesInGuestChat = tmi
-							.getChatters(guestLogin)
-							.execute()
-							.getAllViewers();
-					namesInGuestChat.add(guestLogin);
-					for(int i = 0; i < namesInGuestChat.size(); i++) {
-						namesInGuestChat.set(i, namesInGuestChat.get(i).toLowerCase());
+			try {
+				for(Host host : ((TMIHostGetter) tmi).getHosts(Collections.singletonList(channelId)).execute().getHosts()) {
+					if(host.getTargetLogin() != null) {
+						enterHostMode(host.getTargetLogin());
+						List<String> namesInGuestChat = tmi
+								.getChatters(guestLogin)
+								.execute()
+								.getAllViewers();
+						namesInGuestChat.add(guestLogin);
+						for(int i = 0; i < namesInGuestChat.size(); i++) {
+							namesInGuestChat.set(i, namesInGuestChat.get(i).toLowerCase());
+						}
+						
+						List<TtvUser> tmpGuests = new Vector<>();
+						
+						System.out.println("Users watching " + guestLogin + " at " + new Date().toString());
+						//tmpGuests = storageInterface.findOrCreateTtvUsers(storageInterface.getHelixUsers(null, namesInGuestChat));
+						List<User> guestHelixUsers = storageInterface.getHelixUsersFromLogins(namesInGuestChat);
+						for(int i = 0; i < namesInGuestChat.size(); i++) {
+							tmpGuests.add(storageInterface.findOrCreateTtvUser(guestHelixUsers.get(i)));
+							//System.out.println("    " + (tmpGuests.get(i).getHelixUser() != null ? (tmpGuests.get(i).getHelixUser().getDisplayName()) : namesInGuestChat.get(i)));
+						}
+						for(TtvUser u : tmpGuests) {
+							System.out.println("    " + u.getHelixUser().getDisplayName());
+						}
+	
+						this.guestViewers = tmpGuests;
+					} else {
+						exitHostMode();
 					}
-					
-					List<TtvUser> tmpGuests = new ArrayList<>();
-//					for(TtvUser u : tmpGuests) {
-//						System.out.println("    " + u.getHelixUser().getDisplayName());
-//					}
-					
-					System.out.println("Users watching " + guestLogin + " at " + new Date().toString());
-					//tmpGuests = storageInterface.findOrCreateTtvUsers(storageInterface.getHelixUsers(null, namesInGuestChat));
-					List<User> guestHelixUsers = storageInterface.getHelixUsersFromLogins(namesInGuestChat);
-					for(int i = 0; i < namesInGuestChat.size(); i++) {
-						tmpGuests.add(storageInterface.findOrCreateTtvUser(guestHelixUsers.get(i)));
-						System.out.println("    " + (tmpGuests.get(i).getHelixUser() != null ? (tmpGuests.get(i).getHelixUser().getDisplayName()) : namesInGuestChat.get(i)));
-					}
-
-					this.guestViewers = tmpGuests;
-				} else {
-					exitHostMode();
 				}
+			} catch(Exception e) {
+				e.printStackTrace();
 			}
 			
 			lastUpdate = new Date().getTime();
@@ -261,12 +261,16 @@ public class WatchtimeLogger {
 		
 		@Override
 		public void run() {
-			//System.out.println("Checking if channel is online");
-			parent.checkOnline();
-			//System.out.println("Updating chatters");
-			parent.updateChatters();
-			//System.out.println("Logging all minutes");
-			parent.logAllMinutes(parent.getInterval());
+			try {
+				//System.out.println("Checking if channel is online");
+				parent.checkOnline();
+				//System.out.println("Updating chatters");
+				parent.updateChatters();
+				//System.out.println("Logging all minutes");
+				parent.logAllMinutes(parent.getInterval());
+			} catch(Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	

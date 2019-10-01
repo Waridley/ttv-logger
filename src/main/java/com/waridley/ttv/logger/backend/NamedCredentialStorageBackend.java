@@ -2,20 +2,29 @@ package com.waridley.ttv.logger.backend;
 
 import com.github.philippheuer.credentialmanager.api.IStorageBackend;
 import com.github.philippheuer.credentialmanager.domain.Credential;
+import com.sun.corba.se.impl.logging.NamingSystemException;
 
 import java.util.*;
 
-public class NamedCredentialMap implements IStorageBackend {
+public class NamedCredentialStorageBackend implements IStorageBackend {
 	
-	protected final Map<String, Credential> credentialMap = Collections.synchronizedSortedMap(new TreeMap<>());
+	protected final Map<String, Credential> credentialMap;
+	
+	
+	public NamedCredentialStorageBackend() {
+		this.credentialMap = Collections.synchronizedSortedMap(new TreeMap<>());
+	}
+	
+	public NamedCredentialStorageBackend(Map<String, Credential> backingMap) {
+		this.credentialMap = backingMap;
+	}
 	
 	public Credential getCredentialByName(String name) {
 		return credentialMap.get(name);
 	}
 	
 	public void storeNamedCredential(String name, Credential credential) {
-		if(credential instanceof NamedOAuth2Credential && ((NamedOAuth2Credential) credential).getName().equals(name)) credentialMap.put(name, ((NamedOAuth2Credential) credential).getCredential());
-		else credentialMap.put(name, credential);
+		credentialMap.put(name, credential);
 	}
 	
 	public String getNameOf(Credential credential) {
@@ -33,8 +42,7 @@ public class NamedCredentialMap implements IStorageBackend {
 	@Override
 	public void saveCredentials(List<Credential> credentials) {
 		for(Credential c : credentials) {
-			if(c instanceof NamedOAuth2Credential) credentialMap.put(((NamedOAuth2Credential) c).getName(), ((NamedOAuth2Credential) c).getCredential());
-			else credentialMap.put(c.getIdentityProvider() + ":" + c.getUserId() + ":" + c.getClass(), c);
+			credentialMap.put(c.getIdentityProvider() + ":" + c.getUserId() + ":" + c.getClass(), c);
 		}
 	}
 	

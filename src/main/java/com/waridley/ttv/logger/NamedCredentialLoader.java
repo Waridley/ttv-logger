@@ -1,14 +1,13 @@
 package com.waridley.ttv.logger;
 
 import com.github.philippheuer.credentialmanager.CredentialManager;
-import com.github.philippheuer.credentialmanager.api.IStorageBackend;
 import com.github.philippheuer.credentialmanager.domain.Credential;
 import com.github.philippheuer.credentialmanager.domain.OAuth2Credential;
 import com.github.philippheuer.credentialmanager.identityprovider.OAuth2IdentityProvider;
 import com.github.twitch4j.auth.domain.TwitchScopes;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
-import com.waridley.ttv.logger.backend.NamedOAuth2Credential;
+import com.waridley.ttv.logger.backend.NamedCredentialStorageBackend;
 import com.waridley.ttv.logger.backend.RefreshingProvider;
 
 import java.io.IOException;
@@ -17,14 +16,13 @@ import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 public class NamedCredentialLoader {
 	
 	private CredentialConsumer consumer;
 	
-	private IStorageBackend credentialStorage;
+	private NamedCredentialStorageBackend credentialStorage;
 	
 	private CredentialManager credentialManager;
 	private OAuth2IdentityProvider identityProvider;
@@ -34,24 +32,18 @@ public class NamedCredentialLoader {
 		
 		this.consumer = consumer;
 		this.credentialManager = provider.getCredentialManager();
-		this.credentialStorage = provider.getCredentialManager().getStorageBackend();
+		this.credentialStorage = (NamedCredentialStorageBackend) provider.getCredentialManager().getStorageBackend();
 		this.identityProvider = provider;
 		
 	}
 	
 	
 	public void startCredentialRetrieval(String name) throws IOException {
-		List<Credential> credentials = credentialStorage.loadCredentials();
-		Optional<NamedOAuth2Credential> botCredOpt = Optional.empty();
-		for(Credential c : credentials) {
-			if(c instanceof NamedOAuth2Credential) {
-				if(((NamedOAuth2Credential) c).getName().equals(name)) botCredOpt = Optional.of((NamedOAuth2Credential) c);
-			}
-		}
+		Optional<Credential> botCredOpt = Optional.ofNullable(credentialStorage.getCredentialByName(name));
 		
-		if(botCredOpt.isPresent()) {
+		if(botCredOpt.isPresent() && botCredOpt.get() instanceof OAuth2Credential) {
 			System.out.println("Found bot credential.");
-			OAuth2Credential credential = botCredOpt.get().getCredential();
+			OAuth2Credential credential = (OAuth2Credential) botCredOpt.get();
 			Optional<OAuth2Credential> refreshedCredOpt = Optional.ofNullable(((RefreshingProvider) identityProvider).refreshCredential(credential));
 			if(refreshedCredOpt.isPresent()) {
 				credential = refreshedCredOpt.get();
@@ -59,7 +51,7 @@ public class NamedCredentialLoader {
 			}
 			consumer.consumeCredential(credential);
 		} else {
-			System.out.println("No saved bot credential found. Starting OAuth2 Authorization Code Flow.");
+			System.out.println("No saved credential found named " + name + ". Starting OAuth2 Authorization Code Flow.");
 			
 			HttpServer server = HttpServer.create(new InetSocketAddress(6464), 0);
 			server.createContext("/", this::onReceivedCode);

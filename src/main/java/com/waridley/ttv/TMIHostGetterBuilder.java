@@ -30,8 +30,6 @@ public class TMIHostGetterBuilder extends TwitchAPIBuilder<com.waridley.ttv.TMIH
 	 */
 	private String baseUrl = "https://tmi.twitch.tv";
 	
-	
-	
 	/**
 	 * Initialize the builder
 	 *

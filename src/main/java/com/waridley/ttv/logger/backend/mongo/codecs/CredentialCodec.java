@@ -2,7 +2,6 @@ package com.waridley.ttv.logger.backend.mongo.codecs;
 
 import com.github.philippheuer.credentialmanager.domain.Credential;
 import com.github.philippheuer.credentialmanager.domain.OAuth2Credential;
-import com.waridley.ttv.logger.backend.NamedOAuth2Credential;
 import org.bson.*;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
@@ -78,9 +77,7 @@ public class CredentialCodec implements Codec<Credential> {
 		}
 		reader.readEndDocument();
 		
-		if(name.isPresent()) {
-			credential = new NamedOAuth2Credential(name.get(), oAuth2Credential.orElse(null));
-		} else if(accessToken.isPresent()) {
+		if(accessToken.isPresent()) {
 			credential = new OAuth2Credential(
 					identityProvider,
 					accessToken.get(),

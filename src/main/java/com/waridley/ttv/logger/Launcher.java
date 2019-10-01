@@ -3,6 +3,7 @@ package com.waridley.ttv.logger;
 import com.github.philippheuer.credentialmanager.CredentialManager;
 import com.github.philippheuer.credentialmanager.CredentialManagerBuilder;
 import com.github.philippheuer.credentialmanager.api.IStorageBackend;
+import com.github.philippheuer.credentialmanager.domain.Credential;
 import com.github.philippheuer.credentialmanager.domain.OAuth2Credential;
 import com.github.twitch4j.TwitchClient;
 import com.github.twitch4j.TwitchClientBuilder;
@@ -10,14 +11,20 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.waridley.ttv.TMIHostGetter;
 import com.waridley.ttv.logger.backend.DesktopAuthController;
-import com.waridley.ttv.logger.backend.NamedCredentialMap;
+import com.waridley.ttv.logger.backend.NamedCredentialStorageBackend;
 import com.waridley.ttv.logger.backend.RefreshingProvider;
 import com.waridley.ttv.TtvStorageInterface;
+import com.waridley.ttv.logger.backend.mongo.MongoBackend;
 import com.waridley.ttv.logger.backend.mongo.MongoChatLogger;
+import com.waridley.ttv.logger.backend.mongo.MongoMap;
 import com.waridley.ttv.logger.backend.mongo.MongoTtvBackend;
+import com.waridley.ttv.logger.backend.mongo.codecs.CredentialCodecProvider;
+import org.bson.Document;
+import org.bson.codecs.configuration.CodecRegistries;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -33,7 +40,6 @@ public class Launcher {
 	private static String clientSecret;
 	private static RefreshingProvider idProvider;
 	private static MongoDatabase db;
-	private static NamedCredentialMap credMap;
 	private static IStorageBackend credBackend;
 	private static CredentialManager credentialManager;
 	private static TwitchClient twitchClient;
@@ -64,8 +70,16 @@ public class Launcher {
 		db = connectToDatabase(args[3]);
 		dbname = args[4];
 		
-		credMap = new NamedCredentialMap();
-		credBackend = credMap;
+		MongoCollection<Document> credCollection = MongoBackend.createCollectionIfNotExists(db, "credentials", Document.class)
+				.withCodecRegistry(CodecRegistries.fromRegistries(
+							CodecRegistries.fromProviders(new CredentialCodecProvider()),
+							com.mongodb.MongoClient.getDefaultCodecRegistry()
+						)
+				);
+		
+		credBackend = new NamedCredentialStorageBackend(new MongoMap<>(
+				credCollection,
+				Credential.class));
 		
 		DesktopAuthController authController = new DesktopAuthController(redirectUrl + "/info.html");
 		
@@ -76,7 +90,7 @@ public class Launcher {
 		credentialManager.registerIdentityProvider(idProvider);
 		
 		NamedCredentialLoader namedCredentialLoader = new NamedCredentialLoader(idProvider, Launcher::onReceivedCredential);
-		namedCredentialLoader.startCredentialRetrieval("credential");
+		namedCredentialLoader.startCredentialRetrieval("loggerCredential");
 		
 	}
 	
@@ -86,6 +100,7 @@ public class Launcher {
 			credential = enrichedCred.get();
 			System.out.println("Retrieved chat credential for: " + credential.getUserName());
 		}
+		((NamedCredentialStorageBackend) credBackend).storeNamedCredential("loggerCredential", credential);
 		twitchClient = TwitchClientBuilder.builder()
 				.withEnableHelix(true)
 				.withEnableTMI(true)
