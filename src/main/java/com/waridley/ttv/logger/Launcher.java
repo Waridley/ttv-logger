@@ -72,8 +72,8 @@ public class Launcher {
 		
 		MongoCollection<Document> credCollection = MongoBackend.createCollectionIfNotExists(db, "credentials", Document.class)
 				.withCodecRegistry(CodecRegistries.fromRegistries(
-							CodecRegistries.fromProviders(new CredentialCodecProvider()),
-							com.mongodb.MongoClient.getDefaultCodecRegistry()
+							com.mongodb.MongoClient.getDefaultCodecRegistry(),
+							CodecRegistries.fromProviders(new CredentialCodecProvider())
 						)
 				);
 		

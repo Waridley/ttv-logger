@@ -3,7 +3,9 @@ package com.waridley.ttv.logger.backend.mongo;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.*;
+import org.bson.BsonDocumentReader;
 import org.bson.Document;
+import org.bson.codecs.DecoderContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -20,7 +22,6 @@ public class MongoMap<V> extends AbstractMap<String, V> {
 		this.collection = collection;
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public V put(String key, Object value) {
 		Document storedMap = collection.findOneAndUpdate(
@@ -31,64 +32,47 @@ public class MongoMap<V> extends AbstractMap<String, V> {
 				),
 				new FindOneAndUpdateOptions().upsert(true).returnDocument(ReturnDocument.BEFORE)
 		);
-		
-		return storedMap != null ? (V) storedMap.get(key) : null;
+		if(storedMap != null) {
+			return collection.getCodecRegistry().get(valueClass).decode(
+					new BsonDocumentReader(storedMap.get(key, Document.class).toBsonDocument(valueClass, collection.getCodecRegistry())),
+					DecoderContext.builder().build()
+			);
+		} else {
+			return null;
+		}
 	}
 	
 	@SuppressWarnings("unchecked")
 	@NotNull
 	@Override
 	public Set<Entry<String, V>> entrySet() {
-		Set<Entry<String, V>> resultSet = cache.entrySet();
-		FindIterable<Document> mapDocs = collection.find(Filters.eq("valueClass", valueClass.toString()));
+		//Set<Entry<String, V>> resultSet = cache.entrySet();
+		FindIterable<Document> mapDocs = collection.find(Filters.eq("valueClass", valueClass.toString()), Document.class);
 		for(Document d : mapDocs) {
 			Set<Entry<String, Object>> storedSet = d.entrySet();
 			for(Entry<String, Object> entry : storedSet) {
-				resultSet.add(new MongoEntry<>(entry.getKey(), (V) entry.getValue()));
+				cache.put(entry.getKey(), (V) entry.getValue());
 			}
 		}
 		
-		return resultSet;
+		return cache.entrySet();
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public V get(Object key) {
-		Document value = collection.find(
+		Document doc = collection.find(
 					Filters.and(
 							Filters.eq("valueClass", valueClass.toString()),
 							Filters.exists(String.valueOf(key))
 					)
-		).first() ;
-		return value != null ? (V) value.get(key) : null;
-	}
-	
-	
-	private static class MongoEntry<V> implements Map.Entry<String, V> {
-		
-		private String key;
-		private V value;
-		
-		MongoEntry(String key, V value) {
-			this.key = key;
-			this.value = value;
-		}
-		
-		@Override
-		public String getKey() {
-			return key;
-		}
-		
-		@Override
-		public V getValue() {
-			return value;
-		}
-		
-		@Override
-		public V setValue(V value) {
-			V oldValue = this.value;
-			this.value = value;
-			return oldValue;
+		).first();
+		if(doc != null) {
+			return collection.getCodecRegistry().get(valueClass).decode(
+					new BsonDocumentReader(doc.get(String.valueOf(key), Document.class).toBsonDocument(valueClass, collection.getCodecRegistry())),
+					DecoderContext.builder().build()
+			);
+		} else {
+			return null;
 		}
 	}
 	
