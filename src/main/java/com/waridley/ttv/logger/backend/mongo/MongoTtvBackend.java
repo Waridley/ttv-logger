@@ -42,7 +42,7 @@ public class MongoTtvBackend implements TtvStorageInterface, MongoBackend {
 		return helixCredential != null ? helixCredential.getAccessToken() : null;
 	}
 	
-	private Map<Long, TtvUser> ttvUserCache = Collections.synchronizedSortedMap(new TreeMap<>());
+	private Map<String, TtvUser> ttvUserCache = Collections.synchronizedSortedMap(new TreeMap<>());
 	
 	public MongoTtvBackend( MongoDatabase db, TwitchHelix helix, OAuth2Credential helixCredential) {
 		this.db = db;
@@ -225,7 +225,7 @@ public class MongoTtvBackend implements TtvStorageInterface, MongoBackend {
 	//region New TtvUser methods
 	//region findOrCreateTtvUser()
 	@Override
-	public TtvUser findOrCreateTtvUser(long ttvUserId) {
+	public TtvUser findOrCreateTtvUserFromId(String ttvUserId) {
 		TtvUser ttvUser = ttvUserCache.get(ttvUserId);
 		if(ttvUser == null) {
 			UserList chatters = helix.getUsers(
@@ -241,7 +241,7 @@ public class MongoTtvBackend implements TtvStorageInterface, MongoBackend {
 	}
 	
 	@Override
-	public TtvUser findOrCreateTtvUser(String ttvLogin) {
+	public TtvUser findOrCreateTtvUserFromLogin(String ttvLogin) {
 		TtvUser ttvUser = null;
 		for(TtvUser u : ttvUserCache.values()) {
 			if(u.getHelixUser().getLogin().equalsIgnoreCase(ttvLogin)) {
@@ -331,7 +331,7 @@ public class MongoTtvBackend implements TtvStorageInterface, MongoBackend {
 	}
 	
 	public List<TtvUser> findTtvUsers(List<User> helixUsers) {
-		List<Long> userIds = new ArrayList<>(helixUsers.size());
+		List<String> userIds = new ArrayList<>(helixUsers.size());
 		for(User u : helixUsers) {
 			userIds.add(u.getId());
 		}
@@ -339,7 +339,7 @@ public class MongoTtvBackend implements TtvStorageInterface, MongoBackend {
 	}
 	
 	@Override
-	public List<TtvUser> findTtvUsersByIds(List<Long> userIds) {
+	public List<TtvUser> findTtvUsersByIds(List<String> userIds) {
 		List<TtvUser> result = new ArrayList<>(userIds.size());
 		for(TtvUser u : ttvUserCollection.find(Filters.in("_id", userIds))) {
 			result.add(u);

@@ -19,36 +19,36 @@ public interface TtvStorageInterface {
 	TwitchHelix helix();
 	String helixAccessToken();
 	
-	default TtvUser findOrCreateTtvUser(long ttvUserId) {
+	default TtvUser findOrCreateTtvUserFromId(String ttvUserId) {
 		return findOrCreateTtvUser(getUsersFromIds(Collections.singletonList(ttvUserId)).get(0));
 	}
-	default TtvUser findOrCreateTtvUser(String ttvLogin) {
+	default TtvUser findOrCreateTtvUserFromLogin(String ttvLogin) {
 		return findOrCreateTtvUser(getHelixUsersFromLogins(Collections.singletonList(ttvLogin)).get(0));
 	}
 	TtvUser findOrCreateTtvUser(User user);
 	
-	default Optional<TtvUser> findTtvUser(Long ttvUserId) {
+	default Optional<TtvUser> findTtvUserById(String ttvUserId) {
 		return findTtvUser(getUsersFromIds(Collections.singletonList(ttvUserId)).get(0));
 	}
-	default Optional<TtvUser> findTtvUser(String ttvLogin) {
+	default Optional<TtvUser> findTtvUserByLogin(String ttvLogin) {
 		return findTtvUser(getHelixUsersFromLogins(Collections.singletonList(ttvLogin)).get(0));
 	}
 	Optional<TtvUser> findTtvUser(User user);
 	
 	List<TtvUser> findTtvUsers(List<User> helixUsers);
-	List<TtvUser> findTtvUsersByIds(List<Long> userIds);
+	List<TtvUser> findTtvUsersByIds(List<String> userIds);
 	
 	
-	default List<User> getUsersFromIds(List<Long> ids) {
+	default List<User> getUsersFromIds(List<String> ids) {
 		List<User> result = new ArrayList<>(ids.size());
 		int divSize = 100;
-		List<List<Long>> idLists = new ArrayList<>((ids.size() / divSize) + 1);
+		List<List<String>> idLists = new ArrayList<>((ids.size() / divSize) + 1);
 		for(int i = 0; i < ids.size(); i += divSize) {
 			int to = i + divSize;
 			if(to >= ids.size()) to = ids.size();
 			idLists.add(ids.subList(i, to));
 		}
-		for(List<Long> l : idLists) {
+		for(List<String> l : idLists) {
 			UserList userList = helix().getUsers(
 					helixAccessToken(),
 					l,

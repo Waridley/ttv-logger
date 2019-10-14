@@ -8,6 +8,8 @@ package com.waridley.ttv.logger;
 import com.github.twitch4j.helix.domain.Stream;
 import com.github.twitch4j.helix.domain.User;
 import com.github.twitch4j.tmi.TwitchMessagingInterface;
+import com.github.twitch4j.tmi.TwitchMessagingInterfaceBuilder;
+import com.github.twitch4j.tmi.domain.Host;
 import com.waridley.ttv.*;
 
 import java.util.*;
@@ -67,7 +69,7 @@ public class WatchtimeLogger {
 		this.running = false;
 		this.guestLogin = null;
 		
-		this.tmi = TMIHostGetterBuilder.builder().build();
+		this.tmi = TwitchMessagingInterfaceBuilder.builder().build();
 		
 		
 	}
@@ -145,7 +147,7 @@ public class WatchtimeLogger {
 			
 			
 			try {
-				for(Host host : ((TMIHostGetter) tmi).getHosts(Collections.singletonList(channelId)).execute().getHosts()) {
+				for(Host host : tmi.getHosts(Collections.singletonList(channelId)).execute().getHosts()) {
 					if(host.getTargetLogin() != null) {
 						enterHostMode(host.getTargetLogin());
 						List<String> namesInGuestChat = tmi
@@ -209,7 +211,7 @@ public class WatchtimeLogger {
 		}
 	}
 	
-	private synchronized void goOnline(String title, long gameId) {
+	private synchronized void goOnline(String title, String gameId) {
 		online = true;
 		if(guestLogin != null) exitHostMode();
 		System.out.println(channelName + " is streaming! Title: " + title);

@@ -2,7 +2,6 @@ package com.waridley.ttv.logger.backend;
 
 import com.github.philippheuer.credentialmanager.api.IStorageBackend;
 import com.github.philippheuer.credentialmanager.domain.Credential;
-import com.sun.corba.se.impl.logging.NamingSystemException;
 
 import java.util.*;
 

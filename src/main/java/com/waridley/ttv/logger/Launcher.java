@@ -13,7 +13,6 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.waridley.ttv.TMIHostGetter;
 import com.waridley.ttv.logger.backend.DesktopAuthController;
 import com.waridley.ttv.logger.backend.NamedCredentialStorageBackend;
 import com.waridley.ttv.logger.backend.RefreshingProvider;
@@ -43,7 +42,7 @@ public class Launcher {
 	private static IStorageBackend credBackend;
 	private static CredentialManager credentialManager;
 	private static TwitchClient twitchClient;
-	private static TMIHostGetter tmiHostGetter;
+//	private static TMIHostGetter tmiHostGetter;
 	private static TtvStorageInterface ttvBackend;
 	private static long intervalMinutes = 6L;
 	

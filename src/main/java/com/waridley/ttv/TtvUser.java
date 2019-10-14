@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class TtvUser {
 	
-	private long id;
+	private String id;
 	
 	private User helixUser;
 	
