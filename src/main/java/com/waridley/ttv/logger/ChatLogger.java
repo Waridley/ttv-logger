@@ -39,7 +39,7 @@ public abstract class ChatLogger {
 	}
 	
 	protected synchronized void onHost(HostOnEvent event) {
-		if(!event.getTargetChannel().getName().equalsIgnoreCase(guestChannelName)) {
+		if(event.getChannel().getName().equalsIgnoreCase(channelName) && !event.getTargetChannel().getName().equalsIgnoreCase(guestChannelName)) {
 			if(guestChannelName != null) chat.leaveChannel(guestChannelName);
 			guestChannelName = event.getTargetChannel().getName();
 			System.out.println("Now hosting " + guestChannelName);
