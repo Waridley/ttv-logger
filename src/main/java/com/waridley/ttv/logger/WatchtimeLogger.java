@@ -33,9 +33,9 @@ public class WatchtimeLogger {
 	private String channelName;
 	private String channelId;
 	
-	private List<TtvUser> usersInChat;
+	private List<TtvUser> usersInChat = Collections.emptyList();
 	public List<TtvUser> getUsersInChat() { return usersInChat; }
-	private List<TtvUser> guestViewers;
+	private List<TtvUser> guestViewers = Collections.emptyList();
 	public List<TtvUser> getGuestViewers() { return guestViewers; }
 	
 	private LoggerTask loggerTask;

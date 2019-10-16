@@ -27,4 +27,8 @@ dependencies {
     //lombok
     compileOnly 'org.projectlombok:lombok:1.18.10'
     annotationProcessor 'org.projectlombok:lombok:1.18.10'
+
+
+    //logger
+    compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.2'
 }

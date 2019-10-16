@@ -4,6 +4,9 @@ import com.github.twitch4j.helix.domain.User;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Data
 @NoArgsConstructor
 public class TtvUser {
@@ -17,6 +20,16 @@ public class TtvUser {
 	private long onlineMinutes = 0L;
 	
 	private long guestMinutes = 0L;
+	
+	private Map<String, Object> properties = new HashMap<>();
+	
+	private Object getProperty(String name) {
+		return properties.get(name);
+	}
+	
+	private void setProperty(String name, Object value) {
+		properties.put(name, value);
+	}
 	
 	public TtvUser(User helixUser) {
 		setHelixUser(helixUser);

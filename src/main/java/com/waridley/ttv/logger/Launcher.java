@@ -32,19 +32,19 @@ import java.util.Optional;
 
 public class Launcher {
 	
-	private static String redirectUrl = "http://localhost:6464";
-	private static String dbname = "chatgame";
-	private static String channelName;
-	private static String clientId;
-	private static String clientSecret;
-	private static RefreshingProvider idProvider;
-	private static MongoDatabase db;
-	private static IStorageBackend credBackend;
-	private static CredentialManager credentialManager;
-	private static TwitchClient twitchClient;
-//	private static TMIHostGetter tmiHostGetter;
-	private static TtvStorageInterface ttvBackend;
-	private static long intervalMinutes = 6L;
+	protected static String redirectUrl = "http://localhost:6464";
+	protected static String dbname = "chatgame";
+	protected static String channelName;
+	protected static String clientId;
+	protected static String clientSecret;
+	protected static RefreshingProvider idProvider;
+	protected static MongoDatabase db;
+	protected static IStorageBackend credBackend;
+	protected static CredentialManager credentialManager;
+	protected static TwitchClient twitchClient;
+//	protected static TMIHostGetter tmiHostGetter;
+	protected static TtvStorageInterface ttvBackend;
+	protected static long intervalMinutes = 6L;
 	
 	public static void main(String[] args) {
 		try {
@@ -52,6 +52,7 @@ public class Launcher {
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
+		
 	}
 	
 	private synchronized static void startWatchtimeLogger() {
