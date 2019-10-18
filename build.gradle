@@ -13,10 +13,13 @@ repositories {
 
     jcenter()
     maven { url "https://oss.jfrog.org/artifactory/libs-release"}
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
+
+    implementation 'com.github.Waridley:chatgame:0d9f90277d'
 
     //mongodb java driver
     compile 'org.mongodb:mongo-java-driver:3.11.0'

@@ -13,15 +13,16 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.waridley.ttv.logger.backend.DesktopAuthController;
-import com.waridley.ttv.logger.backend.NamedCredentialStorageBackend;
-import com.waridley.ttv.logger.backend.RefreshingProvider;
+import com.waridley.credentials.DesktopAuthController;
+import com.waridley.credentials.NamedCredentialStorageBackend;
+import com.waridley.credentials.mongo.MongoCredentialStorageBackend;
+import com.waridley.ttv.RefreshingProvider;
 import com.waridley.ttv.TtvStorageInterface;
-import com.waridley.ttv.logger.backend.mongo.MongoBackend;
+import com.waridley.mongo.MongoBackend;
 import com.waridley.ttv.logger.backend.mongo.MongoChatLogger;
-import com.waridley.ttv.logger.backend.mongo.MongoMap;
-import com.waridley.ttv.logger.backend.mongo.MongoTtvBackend;
-import com.waridley.ttv.logger.backend.mongo.codecs.CredentialCodecProvider;
+import com.waridley.mongo.MongoMap;
+import com.waridley.ttv.mongo.MongoTtvBackend;
+import com.waridley.credentials.mongo.codecs.CredentialCodecProvider;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistries;
 
@@ -39,7 +40,7 @@ public class Launcher {
 	protected static String clientSecret;
 	protected static RefreshingProvider idProvider;
 	protected static MongoDatabase db;
-	protected static IStorageBackend credBackend;
+	protected static NamedCredentialStorageBackend credBackend;
 	protected static CredentialManager credentialManager;
 	protected static TwitchClient twitchClient;
 //	protected static TMIHostGetter tmiHostGetter;
@@ -77,9 +78,7 @@ public class Launcher {
 						)
 				);
 		
-		credBackend = new NamedCredentialStorageBackend(new MongoMap<>(
-				credCollection,
-				Credential.class));
+		credBackend = new MongoCredentialStorageBackend(db, "credentials");
 		
 		DesktopAuthController authController = new DesktopAuthController(redirectUrl + "/info.html");
 		
@@ -100,7 +99,7 @@ public class Launcher {
 			credential = enrichedCred.get();
 			System.out.println("Retrieved chat credential for: " + credential.getUserName());
 		}
-		((NamedCredentialStorageBackend) credBackend).storeNamedCredential("loggerCredential", credential);
+		credBackend.saveCredential("loggerCredential", credential);
 		twitchClient = TwitchClientBuilder.builder()
 				.withEnableHelix(true)
 				.withEnableTMI(true)

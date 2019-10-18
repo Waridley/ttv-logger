@@ -7,8 +7,8 @@ import com.github.philippheuer.credentialmanager.identityprovider.OAuth2Identity
 import com.github.twitch4j.auth.domain.TwitchScopes;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
-import com.waridley.ttv.logger.backend.NamedCredentialStorageBackend;
-import com.waridley.ttv.logger.backend.RefreshingProvider;
+import com.waridley.credentials.NamedCredentialStorageBackend;
+import com.waridley.ttv.RefreshingProvider;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -39,12 +39,12 @@ public class NamedCredentialLoader {
 	
 	
 	public void startCredentialRetrieval(String name) throws IOException {
-		Optional<Credential> botCredOpt = Optional.ofNullable(credentialStorage.getCredentialByName(name));
+		Optional<Credential> botCredOpt = credentialStorage.getCredentialByName(name);
 		
 		if(botCredOpt.isPresent() && botCredOpt.get() instanceof OAuth2Credential) {
 			System.out.println("Found bot credential.");
 			OAuth2Credential credential = (OAuth2Credential) botCredOpt.get();
-			Optional<OAuth2Credential> refreshedCredOpt = Optional.ofNullable(((RefreshingProvider) identityProvider).refreshCredential(credential));
+			Optional<OAuth2Credential> refreshedCredOpt = ((RefreshingProvider) identityProvider).refreshCredential(credential);
 			if(refreshedCredOpt.isPresent()) {
 				credential = refreshedCredOpt.get();
 				System.out.println("Successfully refreshed token");

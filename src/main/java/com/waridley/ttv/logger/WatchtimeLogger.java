@@ -161,13 +161,13 @@ public class WatchtimeLogger {
 						
 						List<TtvUser> tmpGuests = new Vector<>();
 						
-						System.out.println("Users watching " + guestLogin + " at " + new Date().toString());
 						//tmpGuests = storageInterface.findOrCreateTtvUsers(storageInterface.getHelixUsers(null, namesInGuestChat));
 						List<User> guestHelixUsers = storageInterface.getHelixUsersFromLogins(namesInGuestChat);
 						for(int i = 0; i < namesInGuestChat.size(); i++) {
 							tmpGuests.add(storageInterface.findOrCreateTtvUser(guestHelixUsers.get(i)));
 							//System.out.println("    " + (tmpGuests.get(i).getHelixUser() != null ? (tmpGuests.get(i).getHelixUser().getDisplayName()) : namesInGuestChat.get(i)));
 						}
+						System.out.println("Users watching " + guestLogin + " at " + new Date().toString());
 						for(TtvUser u : tmpGuests) {
 							System.out.println("    " + u.getHelixUser().getDisplayName());
 						}
