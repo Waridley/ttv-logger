@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.Properties;
 
 public class Launcher {
 	
@@ -47,7 +48,16 @@ public class Launcher {
 	protected static TtvStorageInterface ttvBackend;
 	protected static long intervalMinutes = 6L;
 	
-	public static void main(String[] args) {
+	public static void main(String... args) {
+		
+		Properties props = System.getProperties();
+		props.put("org.slf4j.simpleLogger.defaultLogLevel", "warn");
+		props.put("org.slf4j.simpleLogger.showThreadName", "false");
+		props.put("org.slf4j.simpleLogger.showLogName", "false");
+		props.put("org.slf4j.simpleLogger.showShortLogName", "true");
+		props.put("org.slf4j.simpleLogger.log." + ChatLogger.class.getName(), "trace");
+		props.put("org.slf4j.simpleLogger.log." + WatchtimeLogger.class.getName(), "trace");
+		
 		try {
 			init(args);
 		} catch(Exception e) {
@@ -62,7 +72,7 @@ public class Launcher {
 		
 	}
 	
-	private synchronized static void init(String[] args) throws URISyntaxException, IOException {
+	private synchronized static void init(String... args) throws URISyntaxException, IOException {
 		LoggerOptions options = createOptionsFromArgs(args);
 		channelName = args[0];
 		clientId = args[1];

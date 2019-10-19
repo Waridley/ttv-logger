@@ -11,17 +11,21 @@ import com.github.twitch4j.tmi.TwitchMessagingInterface;
 import com.github.twitch4j.tmi.TwitchMessagingInterfaceBuilder;
 import com.github.twitch4j.tmi.domain.Host;
 import com.waridley.ttv.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /* TODO:
  *  Send notitications? Or log events for later handling?
  *  Implement blacklist
  */
 
+
+@Slf4j
 public class WatchtimeLogger {
 	
 	private boolean online;
@@ -81,14 +85,14 @@ public class WatchtimeLogger {
 					scheduler.shutdown();
 					scheduler.awaitTermination(30L, TimeUnit.SECONDS);
 				} catch(InterruptedException e) {
-					e.printStackTrace();
+					log.error("{}", e);
 				}
 			}
 			scheduler = Executors.newSingleThreadScheduledExecutor();
 			scheduler.scheduleAtFixedRate(loggerTask, 0L, this.interval, TimeUnit.MINUTES);
 			running = true;
 		} else {
-			System.err.println("WatchtimeLogger already running for " + channelName + "!");
+			log.error("WatchtimeLogger already running for " + channelName + "!");
 		}
 	}
 	
@@ -99,13 +103,13 @@ public class WatchtimeLogger {
 					scheduler.shutdown();
 					scheduler.awaitTermination(30L, TimeUnit.SECONDS);
 				} catch(Exception e) {
-					e.printStackTrace();
+					log.error("{}", e);
 				}
 			} else {
-				System.err.println("Running is true, but scheduler is null!");
+				log.error("Running is true, but scheduler is null!");
 			}
 		} else {
-			System.err.println("WatchtimeLogger is already stopped!");
+			log.error("WatchtimeLogger is already stopped!");
 		}
 		running = false;
 	}
@@ -131,17 +135,17 @@ public class WatchtimeLogger {
 			}
 			List<TtvUser> tmpUsers = new Vector<>();
 			
-			System.out.println("Users in chat at " + new Date().toString());
 			//tmpUsers = storageInterface.findOrCreateTtvUsers(storageInterface.getHelixUsers(null, namesInChat));
 			
 			List<User> helixUsers = storageInterface.getHelixUsersFromLogins(namesInChat);
 			for(int i = 0; i < namesInChat.size(); i++) {
 				tmpUsers.add(storageInterface.findOrCreateTtvUser(helixUsers.get(i)));
-				//System.out.println("    " + (tmpUsers.get(i).getHelixUser() != null ? (tmpUsers.get(i).getHelixUser().getDisplayName()) : namesInChat.get(i)));
+				//log.info("    " + (tmpUsers.get(i).getHelixUser() != null ? (tmpUsers.get(i).getHelixUser().getDisplayName()) : namesInChat.get(i)));
 			}
-			for(TtvUser u : tmpUsers) {
-				System.out.println("    " + u.getHelixUser().getDisplayName());
-			}
+			log.info("Users in {}'s chat at {}\n    {}", channelName, new Date().toString(), String.join("\n    ", namesInChat));
+//			for(TtvUser u : tmpUsers) {
+//				log.info("    " + u.getHelixUser().getDisplayName());
+//			}
 
 			this.usersInChat = tmpUsers;
 			
@@ -165,12 +169,12 @@ public class WatchtimeLogger {
 						List<User> guestHelixUsers = storageInterface.getHelixUsersFromLogins(namesInGuestChat);
 						for(int i = 0; i < namesInGuestChat.size(); i++) {
 							tmpGuests.add(storageInterface.findOrCreateTtvUser(guestHelixUsers.get(i)));
-							//System.out.println("    " + (tmpGuests.get(i).getHelixUser() != null ? (tmpGuests.get(i).getHelixUser().getDisplayName()) : namesInGuestChat.get(i)));
+							//log.info("    " + (tmpGuests.get(i).getHelixUser() != null ? (tmpGuests.get(i).getHelixUser().getDisplayName()) : namesInGuestChat.get(i)));
 						}
-						System.out.println("Users watching " + guestLogin + " at " + new Date().toString());
-						for(TtvUser u : tmpGuests) {
-							System.out.println("    " + u.getHelixUser().getDisplayName());
-						}
+						log.info("Users watching {} at {}\n    {}", guestLogin, new Date().toString(), String.join("\n    ", namesInGuestChat));
+//						for(TtvUser u : tmpGuests) {
+//							log.info("    {}", u.getHelixUser().getDisplayName());
+//						}
 	
 						this.guestViewers = tmpGuests;
 					} else {
@@ -178,7 +182,7 @@ public class WatchtimeLogger {
 					}
 				}
 			} catch(Exception e) {
-				e.printStackTrace();
+				log.error("{}", e);
 			}
 			
 			lastUpdate = new Date().getTime();
@@ -199,42 +203,42 @@ public class WatchtimeLogger {
 	private synchronized void logAllMinutes(long minutes) {
 		List<TtvUser> viewers = getUsersInChat();
 		for(int i = 0; i < viewers.size(); i++) {
-			//System.out.println(viewers.get(i).getHelixUser().getDisplayName() + " had " + String.format("%.2f", TtvUser.toHours(viewers.get(i).channelMinutes())) + "h");
+			//log.info(viewers.get(i).getHelixUser().getDisplayName() + " had " + String.format("%.2f", TtvUser.toHours(viewers.get(i).channelMinutes())) + "h");
 			viewers.set(i, logMinutes(viewers.get(i), minutes));
-			//System.out.println(viewers.get(i).getHelixUser().getDisplayName() + " now has " + String.format("%.2f", TtvUser.toHours(viewers.get(i).channelMinutes())) + "h");
+			//log.info(viewers.get(i).getHelixUser().getDisplayName() + " now has " + String.format("%.2f", TtvUser.toHours(viewers.get(i).channelMinutes())) + "h");
 		}
 		List<TtvUser> guestViewers = getGuestViewers();
 		for(int i = 0; i < guestViewers.size(); i++) {
-			//System.out.println(guestViewers.get(i).getHelixUser().getDisplayName() + " had " + String.format("%.2f", TtvUser.toHours(guestViewers.get(i).getGuestMinutes())) + " guest hours");
+			//log.info(guestViewers.get(i).getHelixUser().getDisplayName() + " had " + String.format("%.2f", TtvUser.toHours(guestViewers.get(i).getGuestMinutes())) + " guest hours");
 			guestViewers.set(i, logGuestMinutes(guestViewers.get(i), minutes));
-			//System.out.println(guestViewers.get(i).getHelixUser().getDisplayName() + " now has " + String.format("%.2f", TtvUser.toHours(guestViewers.get(i).getGuestMinutes())) + " guest hours");
+			//log.info(guestViewers.get(i).getHelixUser().getDisplayName() + " now has " + String.format("%.2f", TtvUser.toHours(guestViewers.get(i).getGuestMinutes())) + " guest hours");
 		}
 	}
 	
 	private synchronized void goOnline(String title, String gameId) {
 		online = true;
 		if(guestLogin != null) exitHostMode();
-		System.out.println(channelName + " is streaming! Title: " + title);
+		log.info("{} is streaming! Title: {}", channelName, title);
 	}
 	
 	private synchronized void goOffline() {
 		online = false;
-		System.out.println(channelName + " is offline.");
+		log.info("{} is offline.", channelName);
 	}
 	
 	private synchronized void enterHostMode(String targetChannelName) {
 		if(targetChannelName.equalsIgnoreCase(guestLogin)) {
-			System.out.println("Currently hosting " + guestLogin);
+			log.info("Currently hosting {}", guestLogin);
 		} else {
 			exitHostMode();
-			System.out.println("Now hosting " + targetChannelName);
+			log.info("Now hosting {}", targetChannelName);
 			guestLogin = targetChannelName;
 		}
 	}
 	
 	private synchronized void exitHostMode() {
 		if(guestLogin != null) {
-			System.out.println("No longer hosting " + guestLogin);
+			log.info("No longer hosting {}", guestLogin);
 		}
 		guestLogin = null;
 	}
@@ -250,7 +254,7 @@ public class WatchtimeLogger {
 			if(stream.getType().equalsIgnoreCase("live")) {
 				goOnline(stream.getTitle(), stream.getGameId());
 			} else {
-				System.out.println("Stream found but type is: " + stream.getType());
+				log.error("Stream found but type is: {}", stream.getType());
 				goOffline();
 			}
 		} else {
@@ -264,14 +268,14 @@ public class WatchtimeLogger {
 		@Override
 		public void run() {
 			try {
-				//System.out.println("Checking if channel is online");
+				//log.info("Checking if channel is online");
 				parent.checkOnline();
-				//System.out.println("Updating chatters");
+				//log.info("Updating chatters");
 				parent.updateChatters();
-				//System.out.println("Logging all minutes");
+				//log.info("Logging all minutes");
 				parent.logAllMinutes(parent.getInterval());
 			} catch(Exception e) {
-				e.printStackTrace();
+				log.error("{}", e);
 			}
 		}
 	}

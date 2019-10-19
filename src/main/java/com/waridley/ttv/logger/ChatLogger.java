@@ -17,40 +17,45 @@ public abstract class ChatLogger {
 		this.channelName = channelName;
 		this.chat = chat;
 		chat.joinChannel(channelName);
-		System.out.println("Joined channel " + channelName);
+		log.info("Joined channel " + channelName);
 		chat.getEventManager().onEvent(ChannelMessageEvent.class).subscribe(this::onMessage);
 		chat.getEventManager().onEvent(HostOnEvent.class).subscribe(this::onHost);
 		chat.getEventManager().onEvent(HostOffEvent.class).subscribe(this::onUnhost);
 		chat.getEventManager().onEvent(ChannelJoinEvent.class).subscribe(this::userJoined);
 		chat.getEventManager().onEvent(ChannelLeaveEvent.class).subscribe(this::userLeft);
+		chat.getEventManager().onEvent(IRCMessageEvent.class).subscribe(this::onRawMsg);
 	}
 	
 	
 	protected void onMessage(ChannelMessageEvent event) {
-		System.out.println("[" + event.getChannel().getName() + "]:" + event.getUser().getName() + ": " + event.getMessage());
+		log.info("[{}::{}] {}", event.getChannel().getName(), event.getUser().getName(), event.getMessage());
 	}
 	
 	protected synchronized void userJoined(ChannelJoinEvent event) {
-		System.out.println(event.getUser().getName() + " just joined " + event.getChannel().getName() + "'s chat!");
+		log.info("{} just joined {}'s chat!", event.getUser().getName(), event.getChannel().getName());
 	}
 	
 	protected synchronized void userLeft(ChannelLeaveEvent event) {
-		System.out.println(event.getUser().getName() + " just left " + event.getChannel().getName() + "'s chat... snowpoSOB");
+		log.info("{} just left {}'s chat... snowpoSOB", event.getUser().getName(), event.getChannel().getName());
 	}
 	
 	protected synchronized void onHost(HostOnEvent event) {
 		if(event.getChannel().getName().equalsIgnoreCase(channelName) && !event.getTargetChannel().getName().equalsIgnoreCase(guestChannelName)) {
 			if(guestChannelName != null) chat.leaveChannel(guestChannelName);
 			guestChannelName = event.getTargetChannel().getName();
-			System.out.println("Now hosting " + guestChannelName);
+			log.info("Now hosting {}", guestChannelName);
 			chat.joinChannel(guestChannelName);
 		}
 	}
 	
 	protected synchronized void onUnhost(HostOffEvent event) {
-		System.out.println("No longer hosting " + guestChannelName);
+		log.info("No longer hosting {}", guestChannelName);
 		chat.leaveChannel(guestChannelName);
 		guestChannelName = null;
+	}
+	
+	protected synchronized void onRawMsg(IRCMessageEvent event) {
+		log.trace(event.toString());
 	}
 	
 	public abstract void logMessage(ChannelMessageEvent event);
