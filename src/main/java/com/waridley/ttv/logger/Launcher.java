@@ -5,8 +5,10 @@ import com.github.philippheuer.credentialmanager.CredentialManagerBuilder;
 import com.github.philippheuer.credentialmanager.api.IStorageBackend;
 import com.github.philippheuer.credentialmanager.domain.Credential;
 import com.github.philippheuer.credentialmanager.domain.OAuth2Credential;
+import com.github.philippheuer.events4j.EventManager;
 import com.github.twitch4j.TwitchClient;
 import com.github.twitch4j.TwitchClientBuilder;
+import com.github.twitch4j.chat.TwitchChat;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
@@ -28,6 +30,7 @@ import org.bson.codecs.configuration.CodecRegistries;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Properties;
@@ -55,8 +58,24 @@ public class Launcher {
 		props.put("org.slf4j.simpleLogger.showThreadName", "false");
 		props.put("org.slf4j.simpleLogger.showLogName", "false");
 		props.put("org.slf4j.simpleLogger.showShortLogName", "true");
-		props.put("org.slf4j.simpleLogger.log." + ChatLogger.class.getName(), "trace");
-		props.put("org.slf4j.simpleLogger.log." + WatchtimeLogger.class.getName(), "trace");
+		props.put("org.slf4j.simpleLogger.log." + ChatLogger.class.getName(), "info");
+		props.put("org.slf4j.simpleLogger.log." + WatchtimeLogger.class.getName(), "info");
+		
+		for(String arg : args) {
+			if(arg.startsWith("-v")) {
+				if(arg.equals("-vvv")) {
+					props.put("org.slf4j.simpleLogger.defaultLogLevel", "trace");
+					props.put("org.slf4j.simpleLogger.log." + ChatLogger.class.getName(), "trace");
+					props.put("org.slf4j.simpleLogger.log." + WatchtimeLogger.class.getName(), "trace");
+				} else {
+					props.put("org.slf4j.simpleLogger.log." + ChatLogger.class.getName(), "debug");
+					props.put("org.slf4j.simpleLogger.log." + WatchtimeLogger.class.getName(), "debug");
+					if(arg.equals("-vv")) {
+						props.put("org.slf4j.simpleLogger.defaultLogLevel", "debug");
+					}
+				}
+			}
+		}
 		
 		try {
 			init(args);

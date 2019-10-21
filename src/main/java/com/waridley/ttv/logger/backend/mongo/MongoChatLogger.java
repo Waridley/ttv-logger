@@ -10,6 +10,14 @@ import com.mongodb.client.model.Updates;
 import com.waridley.mongo.MongoBackend;
 import com.waridley.ttv.logger.ChatLogger;
 import org.bson.Document;
+import org.bson.codecs.configuration.CodecRegistries;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.pojo.Convention;
+import org.bson.codecs.pojo.Conventions;
+import org.bson.codecs.pojo.PojoCodecProvider;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MongoChatLogger extends ChatLogger implements MongoBackend {
 	
@@ -34,15 +42,22 @@ public class MongoChatLogger extends ChatLogger implements MongoBackend {
 	
 	@Override
 	public void logMessage(ChannelMessageEvent event) {
-		chatCollection.updateOne(Filters.eq("channelId", event.getChannel().getId().toString()),
-				Updates.push(
-						"chatLog",
-						new Document("time", event.getFiredAt().getTime())
-								.append("userId", event.getUser().getId().toString())
-								.append("message", event.getMessage())
-				),
-				new UpdateOptions().upsert(true)
-		);
+//		chatCollection.updateOne(Filters.eq("channelId", event.getChannel().getId().toString()),
+//				Updates.push(
+//						"chatLog",
+//						new Document("time", event.getFiredAt().getTime())
+//								.append("userId", event.getUser().getId().toString())
+//								.append("message", event.getMessage())
+//				),
+//				new UpdateOptions().upsert(true)
+//		);
+		
+		chatCollection.insertOne(new Document("time", event.getFiredAt().getTime())
+								.append("channelId", event.getChannel().getId())
+								.append("userId", event.getUser().getId())
+								.append("message", event.getMessage()));
+		
+		log.debug("Logged message {}", event);
 	}
 	
 }

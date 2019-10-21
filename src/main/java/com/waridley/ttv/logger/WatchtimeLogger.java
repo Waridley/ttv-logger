@@ -133,21 +133,30 @@ public class WatchtimeLogger {
 			for(int i = 0; i < namesInChat.size(); i++) {
 				namesInChat.set(i, namesInChat.get(i).toLowerCase());
 			}
+			log.info("Users in {}'s chat at {}\n    {}", channelName, new Date().toString(), String.join("\n    ", namesInChat));
+			
 			List<TtvUser> tmpUsers = new Vector<>();
 			
 			//tmpUsers = storageInterface.findOrCreateTtvUsers(storageInterface.getHelixUsers(null, namesInChat));
 			
 			List<User> helixUsers = storageInterface.getHelixUsersFromLogins(namesInChat);
-			for(int i = 0; i < namesInChat.size(); i++) {
-				tmpUsers.add(storageInterface.findOrCreateTtvUser(helixUsers.get(i)));
-				//log.info("    " + (tmpUsers.get(i).getHelixUser() != null ? (tmpUsers.get(i).getHelixUser().getDisplayName()) : namesInChat.get(i)));
+			if(helixUsers.size() != namesInChat.size()) {
+				log.trace("Names in guest chat: {} | Helix users found: {}", namesInChat.size(), helixUsers.size());
+				log.trace("Helix users:");
+				for(User u : helixUsers) {
+					log.trace("    {}", u.getLogin());
+				}
 			}
-			log.info("Users in {}'s chat at {}\n    {}", channelName, new Date().toString(), String.join("\n    ", namesInChat));
+//			for(int i = 0; i < namesInChat.size(); i++) {
+//				tmpUsers.add(storageInterface.findOrCreateTtvUser(helixUsers.get(i)));
+//				//log.info("    " + (tmpUsers.get(i).getHelixUser() != null ? (tmpUsers.get(i).getHelixUser().getDisplayName()) : namesInChat.get(i)));
+//			}
+
 //			for(TtvUser u : tmpUsers) {
 //				log.info("    " + u.getHelixUser().getDisplayName());
 //			}
 
-			this.usersInChat = tmpUsers;
+			this.usersInChat = storageInterface.findTtvUsers(helixUsers);
 			
 			
 			try {
@@ -162,27 +171,35 @@ public class WatchtimeLogger {
 						for(int i = 0; i < namesInGuestChat.size(); i++) {
 							namesInGuestChat.set(i, namesInGuestChat.get(i).toLowerCase());
 						}
+						log.info("Users watching {} at {}\n    {}", guestLogin, new Date().toString(), String.join("\n    ", namesInGuestChat));
 						
-						List<TtvUser> tmpGuests = new Vector<>();
+//						List<TtvUser> tmpGuests = new Vector<>();
 						
 						//tmpGuests = storageInterface.findOrCreateTtvUsers(storageInterface.getHelixUsers(null, namesInGuestChat));
 						List<User> guestHelixUsers = storageInterface.getHelixUsersFromLogins(namesInGuestChat);
-						for(int i = 0; i < namesInGuestChat.size(); i++) {
-							tmpGuests.add(storageInterface.findOrCreateTtvUser(guestHelixUsers.get(i)));
-							//log.info("    " + (tmpGuests.get(i).getHelixUser() != null ? (tmpGuests.get(i).getHelixUser().getDisplayName()) : namesInGuestChat.get(i)));
+						if(guestHelixUsers.size() != namesInGuestChat.size()) {
+							log.trace("Names in guest chat: {} | Helix users found: {}", namesInGuestChat.size(), guestHelixUsers.size());
+							log.trace("Helix users:");
+							for(User u : guestHelixUsers) {
+								log.trace("    {}", u.getDisplayName());
+							}
 						}
-						log.info("Users watching {} at {}\n    {}", guestLogin, new Date().toString(), String.join("\n    ", namesInGuestChat));
+//						for(int i = 0; i < guestHelixUsers.size(); i++) {
+//							tmpGuests.add(storageInterface.findOrCreateTtvUser(guestHelixUsers.get(i)));
+//							//log.info("    " + (tmpGuests.get(i).getHelixUser() != null ? (tmpGuests.get(i).getHelixUser().getDisplayName()) : namesInGuestChat.get(i)));
+//						}
+						
 //						for(TtvUser u : tmpGuests) {
 //							log.info("    {}", u.getHelixUser().getDisplayName());
 //						}
 	
-						this.guestViewers = tmpGuests;
+						this.guestViewers = storageInterface.findTtvUsers(guestHelixUsers);
 					} else {
 						exitHostMode();
 					}
 				}
 			} catch(Exception e) {
-				log.error("{}", e);
+				log.error("Error:", e);
 			}
 			
 			lastUpdate = new Date().getTime();

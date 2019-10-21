@@ -3,12 +3,12 @@ package com.waridley.ttv.logger;
 import com.github.twitch4j.chat.TwitchChat;
 import com.github.twitch4j.chat.events.channel.*;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 
-@Slf4j
 @Getter
 public abstract class ChatLogger {
 	
+	protected static final Logger log = org.slf4j.LoggerFactory.getLogger(ChatLogger.class);
 	protected final String channelName;
 	protected String guestChannelName;
 	protected final TwitchChat chat;
