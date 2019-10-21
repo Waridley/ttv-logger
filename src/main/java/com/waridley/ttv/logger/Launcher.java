@@ -2,13 +2,9 @@ package com.waridley.ttv.logger;
 
 import com.github.philippheuer.credentialmanager.CredentialManager;
 import com.github.philippheuer.credentialmanager.CredentialManagerBuilder;
-import com.github.philippheuer.credentialmanager.api.IStorageBackend;
-import com.github.philippheuer.credentialmanager.domain.Credential;
 import com.github.philippheuer.credentialmanager.domain.OAuth2Credential;
-import com.github.philippheuer.events4j.EventManager;
 import com.github.twitch4j.TwitchClient;
 import com.github.twitch4j.TwitchClientBuilder;
-import com.github.twitch4j.chat.TwitchChat;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
@@ -18,25 +14,24 @@ import com.mongodb.client.MongoDatabase;
 import com.waridley.credentials.DesktopAuthController;
 import com.waridley.credentials.NamedCredentialStorageBackend;
 import com.waridley.credentials.mongo.MongoCredentialStorageBackend;
+import com.waridley.credentials.mongo.codecs.CredentialCodecProvider;
+import com.waridley.mongo.MongoBackend;
 import com.waridley.ttv.RefreshingProvider;
 import com.waridley.ttv.TtvStorageInterface;
-import com.waridley.mongo.MongoBackend;
 import com.waridley.ttv.logger.backend.mongo.MongoChatLogger;
-import com.waridley.mongo.MongoMap;
 import com.waridley.ttv.mongo.MongoTtvBackend;
-import com.waridley.credentials.mongo.codecs.CredentialCodecProvider;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistries;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.Properties;
 
 public class Launcher {
 	
+	private static Logger log;
 	protected static String redirectUrl = "http://localhost:6464";
 	protected static String dbname = "chatgame";
 	protected static String channelName;
@@ -55,7 +50,7 @@ public class Launcher {
 		
 		Properties props = System.getProperties();
 		props.put("org.slf4j.simpleLogger.defaultLogLevel", "warn");
-		props.put("org.slf4j.simpleLogger.showThreadName", "false");
+//		props.put("org.slf4j.simpleLogger.showThreadName", "false");
 		props.put("org.slf4j.simpleLogger.showLogName", "false");
 		props.put("org.slf4j.simpleLogger.showShortLogName", "true");
 		props.put("org.slf4j.simpleLogger.log." + ChatLogger.class.getName(), "info");
@@ -76,6 +71,8 @@ public class Launcher {
 				}
 			}
 		}
+		
+		log = org.slf4j.LoggerFactory.getLogger(Launcher.class);
 		
 		try {
 			init(args);
@@ -126,7 +123,7 @@ public class Launcher {
 		Optional<OAuth2Credential> enrichedCred = idProvider.getAdditionalCredentialInformation(credential);
 		if(enrichedCred.isPresent()) {
 			credential = enrichedCred.get();
-			System.out.println("Retrieved chat credential for: " + credential.getUserName());
+			log.info("Retrieved chat credential for: " + credential.getUserName());
 		}
 		credBackend.saveCredential("loggerCredential", credential);
 		twitchClient = TwitchClientBuilder.builder()
@@ -144,8 +141,7 @@ public class Launcher {
 		ttvBackend = new MongoTtvBackend(db, twitchClient.getHelix(), credential);
 		
 		
-		System.out.println("Channel ID: " + ttvBackend.getHelixUsersFromLogins(Collections.singletonList(channelName)).get(0).getId().toString());
-		System.out.println("Creating chatLogger for " + channelName);
+		log.info("Creating ChatLogger for " + channelName);
 		ChatLogger chatLogger = new MongoChatLogger(
 				twitchClient.getChat(),
 				channelName,

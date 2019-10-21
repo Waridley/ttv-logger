@@ -292,7 +292,7 @@ public class WatchtimeLogger {
 				//log.info("Logging all minutes");
 				parent.logAllMinutes(parent.getInterval());
 			} catch(Exception e) {
-				log.error("{}", e);
+				log.error("Error: ", e);
 			}
 		}
 	}
