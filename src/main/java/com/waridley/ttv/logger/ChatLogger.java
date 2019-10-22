@@ -32,11 +32,11 @@ public abstract class ChatLogger {
 	}
 	
 	protected synchronized void userJoined(ChannelJoinEvent event) {
-		log.info("{} just joined {}'s chat!", event.getUser().getName(), event.getChannel().getName());
+		log.debug("{} just joined {}'s chat!", event.getUser().getName(), event.getChannel().getName());
 	}
 	
 	protected synchronized void userLeft(ChannelLeaveEvent event) {
-		log.info("{} just left {}'s chat... snowpoSOB", event.getUser().getName(), event.getChannel().getName());
+		log.debug("{} just left {}'s chat... snowpoSOB", event.getUser().getName(), event.getChannel().getName());
 	}
 	
 	protected synchronized void onHost(HostOnEvent event) {

@@ -24,7 +24,10 @@ import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.slf4j.Logger;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.util.Optional;
 import java.util.Properties;
@@ -89,13 +92,40 @@ public class Launcher {
 	}
 	
 	private synchronized static void init(String... args) throws URISyntaxException, IOException {
+		
+		String dbConnStr = null;
+		
+		if(args.length > 6) {
+			channelName = args[0];
+			clientId = args[1];
+			clientSecret = args[2];
+			redirectUrl = args[3];
+			dbConnStr = args[4];
+		} else {
+			try {
+				InputWrapper in = new InputWrapper();
+				PrintStream out = System.out;
+				out.println("Channel name:");
+				channelName = in.readLine();
+				out.println("Client ID:");
+				clientId = in.readLine();
+				out.println("Client secret:");
+				clientSecret = in.readSecret();
+				out.println("Redirect URL:");
+				redirectUrl = in.readLine();
+				out.println("MongoDB connection string:");
+				dbConnStr = in.readSecret();
+				out.println("Database name:");
+				dbname = in.readLine();
+			} catch(IOException e) {
+				log.error("Failed to read input", e);
+			}
+		}
+		
+		
 		LoggerOptions options = createOptionsFromArgs(args);
-		channelName = args[0];
-		clientId = args[1];
-		clientSecret = args[2];
 		idProvider = new RefreshingProvider(clientId, clientSecret, redirectUrl);
-		db = connectToDatabase(args[3]);
-		dbname = args[4];
+		db = connectToDatabase(dbConnStr);
 		
 		MongoCollection<Document> credCollection = MongoBackend.createCollectionIfNotExists(db, "credentials", Document.class)
 				.withCodecRegistry(CodecRegistries.fromRegistries(
@@ -168,4 +198,32 @@ public class Launcher {
 	}
 	
 	
+}
+
+class InputWrapper {
+	
+	private BufferedReader lineReader;
+	private PasswordReader passwordReader;
+	
+	InputWrapper() {
+		lineReader = new BufferedReader(new InputStreamReader(System.in));
+		if(System.console() != null) {
+			passwordReader = () -> String.valueOf(System.console().readPassword());
+		} else {
+			passwordReader = this::readLine;
+		}
+	}
+	
+	String readLine() throws IOException {
+		return lineReader.readLine();
+	}
+	
+	String readSecret() throws IOException {
+		return passwordReader.readPassword();
+	}
+	
+	@FunctionalInterface
+	public interface PasswordReader {
+		String readPassword() throws IOException;
+	}
 }
