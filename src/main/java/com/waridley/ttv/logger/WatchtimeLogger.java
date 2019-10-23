@@ -41,6 +41,8 @@ public class WatchtimeLogger {
 	public List<TtvUser> getUsersInChat() { return usersInChat; }
 	private List<TtvUser> guestViewers = Collections.emptyList();
 	public List<TtvUser> getGuestViewers() { return guestViewers; }
+	public List<TtvUser> hostingChannels = Collections.emptyList();
+	public List<TtvUser> getHostingChannels() { return  guestViewers; }
 	
 	private LoggerTask loggerTask;
 	private ScheduledExecutorService scheduler;
@@ -202,6 +204,14 @@ public class WatchtimeLogger {
 				log.error("Error:", e);
 			}
 			
+			if(online) {
+				hostingChannels = new Vector<>();
+				for(Host host : tmi.getHostsOf(channelId).execute().getHosts()) {
+					TtvUser hostingUser = storageInterface.findOrCreateTtvUserFromId(host.getHostId());
+					hostingChannels.add(hostingUser);
+				}
+			}
+			
 			lastUpdate = new Date().getTime();
 			
 		} else {
@@ -217,18 +227,24 @@ public class WatchtimeLogger {
 		return storageInterface.logGuestMinutes(user, minutes, guestLogin);
 	}
 	
+	private synchronized TtvUser logHostingMinutes(TtvUser user, long minutes) {
+		//TODO implement hosting minutes logging
+		return user;
+	}
+	
 	private synchronized void logAllMinutes(long minutes) {
-		List<TtvUser> viewers = getUsersInChat();
-		for(int i = 0; i < viewers.size(); i++) {
-			//log.info(viewers.get(i).getHelixUser().getDisplayName() + " had " + String.format("%.2f", TtvUser.toHours(viewers.get(i).channelMinutes())) + "h");
-			viewers.set(i, logMinutes(viewers.get(i), minutes));
-			//log.info(viewers.get(i).getHelixUser().getDisplayName() + " now has " + String.format("%.2f", TtvUser.toHours(viewers.get(i).channelMinutes())) + "h");
+		for(int i = 0; i < usersInChat.size(); i++) {
+//			log.trace(usersInChat.get(i).getHelixUser().getDisplayName() + " had " + String.format("%.2f", TtvUser.toHours(usersInChat.get(i).channelMinutes())) + "h");
+			usersInChat.set(i, logMinutes(usersInChat.get(i), minutes));
+//			log.trace(usersInChat.get(i).getHelixUser().getDisplayName() + " now has " + String.format("%.2f", TtvUser.toHours(usersInChat.get(i).channelMinutes())) + "h");
 		}
-		List<TtvUser> guestViewers = getGuestViewers();
 		for(int i = 0; i < guestViewers.size(); i++) {
-			//log.info(guestViewers.get(i).getHelixUser().getDisplayName() + " had " + String.format("%.2f", TtvUser.toHours(guestViewers.get(i).getGuestMinutes())) + " guest hours");
+//			log.trace(guestViewers.get(i).getHelixUser().getDisplayName() + " had " + String.format("%.2f", TtvUser.toHours(guestViewers.get(i).getGuestMinutes())) + " guest hours");
 			guestViewers.set(i, logGuestMinutes(guestViewers.get(i), minutes));
-			//log.info(guestViewers.get(i).getHelixUser().getDisplayName() + " now has " + String.format("%.2f", TtvUser.toHours(guestViewers.get(i).getGuestMinutes())) + " guest hours");
+//			log.trace(guestViewers.get(i).getHelixUser().getDisplayName() + " now has " + String.format("%.2f", TtvUser.toHours(guestViewers.get(i).getGuestMinutes())) + " guest hours");
+		}
+		for(int i = 0; i < hostingChannels.size(); i++) {
+			hostingChannels.set(i, logHostingMinutes(hostingChannels.get(i), minutes));
 		}
 	}
 	

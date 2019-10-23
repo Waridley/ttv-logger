@@ -34,11 +34,6 @@ public class MongoChatLogger extends ChatLogger implements MongoBackend {
 		this.chatCollection = createCollectionIfNotExists(collectionName, Document.class);
 	}
 	
-	@Override
-	protected void onMessage(ChannelMessageEvent event) {
-		super.onMessage(event);
-		logMessage(event);
-	}
 	
 	@Override
 	public void logMessage(ChannelMessageEvent event) {

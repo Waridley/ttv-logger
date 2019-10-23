@@ -18,6 +18,7 @@ import com.waridley.credentials.mongo.codecs.CredentialCodecProvider;
 import com.waridley.mongo.MongoBackend;
 import com.waridley.ttv.RefreshingProvider;
 import com.waridley.ttv.TtvStorageInterface;
+import com.waridley.ttv.logger.backend.local.FileChatLogger;
 import com.waridley.ttv.logger.backend.mongo.MongoChatLogger;
 import com.waridley.ttv.mongo.MongoTtvBackend;
 import org.bson.Document;
@@ -48,6 +49,8 @@ public class Launcher {
 //	protected static TMIHostGetter tmiHostGetter;
 	protected static TtvStorageInterface ttvBackend;
 	protected static long intervalMinutes = 6L;
+	protected static String chatCollectionName = null;
+	protected static String chatLogFilePath = null;
 	
 	public static void main(String... args) {
 		
@@ -72,6 +75,10 @@ public class Launcher {
 						props.put("org.slf4j.simpleLogger.defaultLogLevel", "debug");
 					}
 				}
+			} else if(arg.startsWith("--chatLogCollection=")) {
+				chatCollectionName = arg.split("=")[1].replaceAll("\"", "");
+			} else if(arg.startsWith("--chatLogFile=")) {
+				chatLogFilePath = arg.split("=")[1].replaceAll("\"", "");
 			}
 		}
 		
@@ -172,11 +179,23 @@ public class Launcher {
 		
 		
 		log.info("Creating ChatLogger for " + channelName);
-		ChatLogger chatLogger = new MongoChatLogger(
-				twitchClient.getChat(),
-				channelName,
-				db,
-				"chat");
+		if(chatCollectionName != null) {
+			ChatLogger chatLogger = new MongoChatLogger(
+					twitchClient.getChat(),
+					channelName,
+					db,
+					chatCollectionName);
+		}
+		if(chatLogFilePath != null) {
+			try {
+				FileChatLogger chatLogger = new FileChatLogger(
+						twitchClient.getChat(),
+						channelName,
+						chatLogFilePath);
+			} catch(IOException e) {
+				log.error("Failed to open chat log file:", e);
+			}
+		}
 		startWatchtimeLogger();
 	}
 	

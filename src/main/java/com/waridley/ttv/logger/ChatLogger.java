@@ -29,6 +29,7 @@ public abstract class ChatLogger {
 	
 	protected void onMessage(ChannelMessageEvent event) {
 		log.info("[{}::{}] {}", event.getChannel().getName(), event.getUser().getName(), event.getMessage());
+		logMessage(event);
 	}
 	
 	protected synchronized void userJoined(ChannelJoinEvent event) {
