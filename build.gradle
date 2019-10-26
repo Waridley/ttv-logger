@@ -32,18 +32,12 @@ dependencies {
     compileOnly 'org.projectlombok:lombok:1.18.10'
     annotationProcessor 'org.projectlombok:lombok:1.18.10'
 
-
     //logger
     compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.2'
-}
 
-//create a single Jar with all dependencies
-task fatJar(type: Jar) {
-    manifest {
-        attributes 'Main-Class': 'com.waridley.ttv.logger.Launcher'
-    }
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-    with jar
+    //CLI parser
+    compile 'info.picocli:picocli:4.0.4'
+    annotationProcessor 'info.picocli:picocli-codegen:4.0.4'
 }
 
 jar {

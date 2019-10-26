@@ -3,22 +3,29 @@ package com.waridley.ttv.logger;
 import com.github.twitch4j.chat.TwitchChat;
 import com.github.twitch4j.chat.events.channel.*;
 import lombok.Getter;
-import org.slf4j.Logger;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
-public abstract class ChatLogger {
+@Slf4j
+public class ChatLogger {
 	
-	protected static final Logger log = org.slf4j.LoggerFactory.getLogger(ChatLogger.class);
 	protected final String channelName;
 	protected String guestChannelName;
 	protected final TwitchChat chat;
+	protected List<MessageLogger> messageLoggers;
 	
 	public ChatLogger(TwitchChat chat, String channelName) {
 		this.channelName = channelName;
 		this.chat = chat;
 		chat.joinChannel(channelName);
 		log.info("Joined channel " + channelName);
-		chat.getEventManager().onEvent(ChannelMessageEvent.class).subscribe(this::onMessage);
+		
+		messageLoggers = new ArrayList<>();
+		
+		chat.getEventManager().onEvent(ChannelMessageEvent.class).subscribe(this::logMessage);
 		chat.getEventManager().onEvent(HostOnEvent.class).subscribe(this::onHost);
 		chat.getEventManager().onEvent(HostOffEvent.class).subscribe(this::onUnhost);
 		chat.getEventManager().onEvent(ChannelJoinEvent.class).subscribe(this::userJoined);
@@ -26,10 +33,8 @@ public abstract class ChatLogger {
 		chat.getEventManager().onEvent(IRCMessageEvent.class).subscribe(this::onRawMsg);
 	}
 	
-	
-	protected void onMessage(ChannelMessageEvent event) {
-		log.info("[{}::{}] {}", event.getChannel().getName(), event.getUser().getName(), event.getMessage());
-		logMessage(event);
+	public void addMessageLogger(MessageLogger logger) {
+		messageLoggers.add(logger);
 	}
 	
 	protected synchronized void userJoined(ChannelJoinEvent event) {
@@ -50,14 +55,23 @@ public abstract class ChatLogger {
 	}
 	
 	protected synchronized void onUnhost(HostOffEvent event) {
-		log.info("No longer hosting {}", guestChannelName);
-		chat.leaveChannel(guestChannelName);
-		guestChannelName = null;
+		log.info("No longer hosting {}", event.getChannel().getName());
+		chat.leaveChannel(event.getChannel().getName());
+		if(event.getChannel().getName().equalsIgnoreCase(guestChannelName)) guestChannelName = null;
 	}
 	
 	protected synchronized void onRawMsg(IRCMessageEvent event) {
 		log.trace(event.toString());
 	}
 	
-	public abstract void logMessage(ChannelMessageEvent event);
+	protected void logMessage(ChannelMessageEvent event) {
+		for(MessageLogger logger : messageLoggers) {
+			logger.logMessage(event);
+		}
+	}
+	
+	@FunctionalInterface
+	public interface  MessageLogger {
+		void logMessage(ChannelMessageEvent event);
+	}
 }

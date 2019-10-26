@@ -9,6 +9,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import com.waridley.credentials.NamedCredentialStorageBackend;
 import com.waridley.ttv.RefreshingProvider;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -18,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Optional;
 
+@Slf4j
 public class NamedCredentialLoader {
 	
 	private CredentialConsumer consumer;
@@ -27,35 +29,42 @@ public class NamedCredentialLoader {
 	private CredentialManager credentialManager;
 	private OAuth2IdentityProvider identityProvider;
 	
+	private String infoPath;
 	
-	public NamedCredentialLoader(OAuth2IdentityProvider provider, CredentialConsumer consumer) {
+	HttpServer server;
+	
+	public NamedCredentialLoader(OAuth2IdentityProvider provider, CredentialConsumer consumer, String infoPath) {
 		
 		this.consumer = consumer;
 		this.credentialManager = provider.getCredentialManager();
 		this.credentialStorage = (NamedCredentialStorageBackend) provider.getCredentialManager().getStorageBackend();
 		this.identityProvider = provider;
-		
+		this.infoPath = infoPath;
+	}
+	
+	public NamedCredentialLoader(OAuth2IdentityProvider provider, CredentialConsumer consumer) {
+		this(provider, consumer, null);
 	}
 	
 	
 	public void startCredentialRetrieval(String name) throws IOException {
-		Optional<Credential> botCredOpt = credentialStorage.getCredentialByName(name);
+		Optional<Credential> credOpt = credentialStorage.getCredentialByName(name);
 		
-		if(botCredOpt.isPresent() && botCredOpt.get() instanceof OAuth2Credential) {
-			System.out.println("Found bot credential.");
-			OAuth2Credential credential = (OAuth2Credential) botCredOpt.get();
+		if(credOpt.isPresent() && credOpt.get() instanceof OAuth2Credential) {
+			log.info("Found credential named {}", name);
+			OAuth2Credential credential = (OAuth2Credential) credOpt.get();
 			Optional<OAuth2Credential> refreshedCredOpt = ((RefreshingProvider) identityProvider).refreshCredential(credential);
 			if(refreshedCredOpt.isPresent()) {
 				credential = refreshedCredOpt.get();
-				System.out.println("Successfully refreshed token");
+				log.info("Successfully refreshed token");
 			}
 			consumer.consumeCredential(credential);
 		} else {
-			System.out.println("No saved credential found named " + name + ". Starting OAuth2 Authorization Code Flow.");
+			log.info("No saved credential found named {}. Starting OAuth2 Authorization Code Flow.", name);
 			
-			HttpServer server = HttpServer.create(new InetSocketAddress(6464), 0);
+			server = HttpServer.create(new InetSocketAddress(6464), 0);
 			server.createContext("/", this::onReceivedCode);
-			server.createContext("/info.html", this::handleInfoPage);
+			if(infoPath != null) server.createContext(infoPath, this::handleInfoPage);
 			server.start();
 			
 			
@@ -154,9 +163,11 @@ public class NamedCredentialLoader {
 				e.printStackTrace();
 			}
 		}
+		server.stop(0);
 		
 	}
 	
+	@FunctionalInterface
 	interface CredentialConsumer {
 		void consumeCredential(OAuth2Credential credential);
 	}
