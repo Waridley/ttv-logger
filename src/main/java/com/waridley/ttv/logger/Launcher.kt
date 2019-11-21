@@ -65,7 +65,7 @@ class Launcher: CliktCommand() {
 		idProvider = RefreshingProvider(clientId, clientSecret, redirectUrl)
 		db = connectToDatabase(dbConnStr)
 		credBackend = MongoCredentialStorageBackend(db, "credentials")
-		authController= if (infoPath != null) DesktopAuthController(redirectUrl + infoPath) else DesktopAuthController()
+		authController= DesktopAuthController(if(infoPath != null) redirectUrl + infoPath else null)
 		credentialManager = CredentialManagerBuilder.builder()
 				.withAuthenticationController(authController)
 				.withStorageBackend(credBackend)
