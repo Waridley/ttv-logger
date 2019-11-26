@@ -153,7 +153,8 @@ class WatchtimeLogger @JvmOverloads constructor(
 		return storageInterface.logGuestMinutes(user, minutes, guestLogin)
 	}
 	
-	private fun logHostingMinutes(user: TtvUser, minutes: Long): TtvUser { //TODO implement hosting minutes logging
+	private fun logHostingMinutes(user: TtvUser, minutes: Long): TtvUser {
+		//TODO implement hosting minutes logging
 		return user
 	}
 	

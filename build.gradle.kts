@@ -46,7 +46,7 @@ tasks.jar {
     manifest {
         attributes["Implementation-Title"] = project.name
         attributes["Implementation-Version"] = project.version
-        attributes["Main-Class"] = "com.waridley.ttv.logger.Launcher"
+        attributes["Main-Class"] = "com.waridley.ttv.logger.LauncherKt"
     }
 }
 tasks.compileKotlin {
