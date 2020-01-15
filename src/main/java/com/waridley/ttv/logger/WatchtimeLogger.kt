@@ -116,7 +116,7 @@ class WatchtimeLogger @JvmOverloads constructor(
 				for (i in namesInGuestChat.indices) {
 					namesInGuestChat[i] = namesInGuestChat[i]!!.toLowerCase()
 				}
-				log.info("{} users watching {} at {}\n    {}", guestChatters.viewerCount, guestLogin, Date().toString(), java.lang.String.join("\n    ", namesInGuestChat))
+				log.info("{} users in {}'s chat at {}\n    {}", guestChatters.viewerCount, guestLogin, Date().toString(), java.lang.String.join("\n    ", namesInGuestChat))
 				val guestHelixUsers = storageInterface.getHelixUsersFromLogins(namesInGuestChat)
 				if (guestHelixUsers.size != namesInGuestChat.size) {
 					log.trace("Names in guest chat: {} | Helix users found: {}", namesInGuestChat.size, guestHelixUsers.size)

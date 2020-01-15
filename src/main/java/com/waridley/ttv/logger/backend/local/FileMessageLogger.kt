@@ -24,7 +24,7 @@ class FileMessageLogger(filePath: String) : MessageLogger {
 	
 	init {
 		val file = File(filePath)
-		if (file.parentFile.mkdirs()) log.info("Created parent directories for log file")
+		if (file.parentFile?.mkdirs() == true) log.info("Created parent directories for log file")
 		logWriter = PrintWriter(FileOutputStream(file, true))
 		log.info("Logging chat to file: {}", filePath)
 	}
